@@ -81,6 +81,34 @@ class Program
         return parts.ToArray();
     }
 
+    static (string[] args, string? redirectStdout) ExtractRedirections(string[] parts)
+    {
+        var args = new List<string>();
+        string? redirectStdout = null;
+        for (int i = 0; i < parts.Length; i++)
+        {
+            if ((parts[i] == ">" || parts[i] == "1>") && i + 1 < parts.Length)
+            {
+                redirectStdout = parts[i + 1];
+                i++;
+            }
+            else
+            {
+                args.Add(parts[i]);
+            }
+        }
+        return (args.ToArray(), redirectStdout);
+    }
+
+    static void WithStdoutRedirect(string? file, Action run)
+    {
+        if (string.IsNullOrEmpty(file)) { run(); return; }
+        var saved = Console.Out;
+        using var f = new StreamWriter(file, append: false);
+        Console.SetOut(f);
+        try { run(); } finally { Console.SetOut(saved); }
+    }
+
     static bool IsExecutable(string path)
     {
         if (!File.Exists(path))
@@ -131,7 +159,13 @@ class Program
                 continue;
             }
 
-            string command = parts[0];
+            (string[] args, string? redirectStdout) = ExtractRedirections(parts);
+            if (args.Length == 0)
+            {
+                continue;
+            }
+
+            string command = args[0];
 
             if (command == "exit")
             {
@@ -139,15 +173,17 @@ class Program
             }
             else if (command == "echo")
             {
-                Console.WriteLine(parts.Length > 1 ? string.Join(" ", parts[1..]) : "");
+                WithStdoutRedirect(redirectStdout, () =>
+                    Console.WriteLine(args.Length > 1 ? string.Join(" ", args[1..]) : ""));
             }
             else if (command == "pwd")
             {
-                Console.WriteLine(Directory.GetCurrentDirectory());
+                WithStdoutRedirect(redirectStdout, () =>
+                    Console.WriteLine(Directory.GetCurrentDirectory()));
             }
             else if (command == "cd")
             {
-                string path = parts.Length > 1 ? parts[1] : "";
+                string path = args.Length > 1 ? args[1] : "";
                 if (!string.IsNullOrEmpty(path) && (path == "~" || path.StartsWith("~/")))
                 {
                     string? home = Environment.GetEnvironmentVariable("HOME")
@@ -166,23 +202,26 @@ class Program
             else if (command == "type")
             {
                 string[] builtins = ["echo", "exit", "type", "pwd", "cd"];
-                string name = parts.Length > 1 ? parts[1] : "";
-                if (string.IsNullOrEmpty(name))
+                string name = args.Length > 1 ? args[1] : "";
+                WithStdoutRedirect(redirectStdout, () =>
                 {
-                    Console.WriteLine(": not found");
-                }
-                else if (builtins.Contains(name))
-                {
-                    Console.WriteLine($"{name} is a shell builtin");
-                }
-                else if (TryFindExecutableInPath(name, out string? fullPath) && fullPath is not null)
-                {
-                    Console.WriteLine($"{name} is {fullPath}");
-                }
-                else
-                {
-                    Console.WriteLine($"{name}: not found");
-                }
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        Console.WriteLine(": not found");
+                    }
+                    else if (builtins.Contains(name))
+                    {
+                        Console.WriteLine($"{name} is a shell builtin");
+                    }
+                    else if (TryFindExecutableInPath(name, out string? fullPath) && fullPath is not null)
+                    {
+                        Console.WriteLine($"{name} is {fullPath}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{name}: not found");
+                    }
+                });
             }
             else if (TryFindExecutableInPath(command, out string? exePath) && exePath is not null)
             {
@@ -195,7 +234,7 @@ class Program
                 };
                 psi.ArgumentList.Add("-c");
                 string fullCommand = "exec \"" + command.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
-                foreach (string arg in parts[1..])
+                foreach (string arg in args[1..])
                     fullCommand += " \"" + arg.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
                 psi.ArgumentList.Add(fullCommand);
                 using var process = Process.Start(psi);
@@ -204,7 +243,10 @@ class Program
                     string output = process.StandardOutput.ReadToEnd();
                     string error = process.StandardError.ReadToEnd();
                     process.WaitForExit();
-                    Console.Write(output);
+                    if (redirectStdout is not null)
+                        File.WriteAllText(redirectStdout, output);
+                    else
+                        Console.Write(output);
                     Console.Write(error);
                 }
             }
