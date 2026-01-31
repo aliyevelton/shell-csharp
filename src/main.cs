@@ -13,8 +13,9 @@ class Program
         var current = new StringBuilder();
         bool inSingleQuotes = false;
         bool inDoubleQuotes = false;
-        foreach (char c in input)
+        for (int i = 0; i < input.Length; i++)
         {
+            char c = input[i];
             if (inSingleQuotes)
             {
                 if (c == '\'')
@@ -31,7 +32,19 @@ class Program
             }
             else
             {
-                if (c == '\'')
+                if (c == '\\')
+                {
+                    if (i + 1 < input.Length)
+                    {
+                        current.Append(input[i + 1]);
+                        i++;
+                    }
+                    else
+                    {
+                        current.Append('\\');
+                    }
+                }
+                else if (c == '\'')
                     inSingleQuotes = true;
                 else if (c == '"')
                     inDoubleQuotes = true;
