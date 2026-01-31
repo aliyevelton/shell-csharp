@@ -68,9 +68,20 @@ class Program
             {
                 Console.WriteLine(Directory.GetCurrentDirectory());
             }
+            else if (command == "cd")
+            {
+                string path = parts.Length > 1 ? parts[1] : "";
+                if (!string.IsNullOrEmpty(path))
+                {
+                    if (Directory.Exists(path))
+                        Directory.SetCurrentDirectory(path);
+                    else
+                        Console.WriteLine($"cd: {path}: No such file or directory");
+                }
+            }
             else if (command == "type")
             {
-                string[] builtins = ["echo", "exit", "type", "pwd"];
+                string[] builtins = ["echo", "exit", "type", "pwd", "cd"];
                 string name = parts.Length > 1 ? parts[1] : "";
                 if (string.IsNullOrEmpty(name))
                 {
