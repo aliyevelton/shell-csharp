@@ -64,9 +64,13 @@ class Program
             {
                 Console.WriteLine(parts.Length > 1 ? string.Join(" ", parts[1..]) : "");
             }
+            else if (command == "pwd")
+            {
+                Console.WriteLine(Directory.GetCurrentDirectory());
+            }
             else if (command == "type")
             {
-                string[] builtins = ["echo", "exit", "type"];
+                string[] builtins = ["echo", "exit", "type", "pwd"];
                 string name = parts.Length > 1 ? parts[1] : "";
                 if (string.IsNullOrEmpty(name))
                 {
