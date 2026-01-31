@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -83,6 +84,18 @@ class Program
                 {
                     Console.WriteLine($"{name}: not found");
                 }
+            }
+            else if (TryFindExecutableInPath(command, out string? exePath) && exePath is not null)
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    UseShellExecute = false,
+                };
+                foreach (string arg in parts[1..])
+                    psi.ArgumentList.Add(arg);
+                using var process = Process.Start(psi);
+                process?.WaitForExit();
             }
             else
             {
