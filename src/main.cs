@@ -81,10 +81,11 @@ class Program
         return parts.ToArray();
     }
 
-    static (string[] args, string? redirectStdout) ExtractRedirections(string[] parts)
+    static (string[] args, string? redirectStdout, string? redirectStderr) ExtractRedirections(string[] parts)
     {
         var args = new List<string>();
         string? redirectStdout = null;
+        string? redirectStderr = null;
         for (int i = 0; i < parts.Length; i++)
         {
             if ((parts[i] == ">" || parts[i] == "1>") && i + 1 < parts.Length)
@@ -92,21 +93,41 @@ class Program
                 redirectStdout = parts[i + 1];
                 i++;
             }
+            else if (parts[i] == "2>" && i + 1 < parts.Length)
+            {
+                redirectStderr = parts[i + 1];
+                i++;
+            }
             else
             {
                 args.Add(parts[i]);
             }
         }
-        return (args.ToArray(), redirectStdout);
+        return (args.ToArray(), redirectStdout, redirectStderr);
     }
 
-    static void WithStdoutRedirect(string? file, Action run)
+    static void WithRedirects(string? stdoutFile, string? stderrFile, Action run)
     {
-        if (string.IsNullOrEmpty(file)) { run(); return; }
-        var saved = Console.Out;
-        using var f = new StreamWriter(file, append: false);
-        Console.SetOut(f);
-        try { run(); } finally { Console.SetOut(saved); }
+        TextWriter? savedOut = null, savedErr = null;
+        StreamWriter? outStream = null, errStream = null;
+        if (!string.IsNullOrEmpty(stdoutFile))
+        {
+            savedOut = Console.Out;
+            outStream = new StreamWriter(stdoutFile, append: false);
+            Console.SetOut(outStream);
+        }
+        if (!string.IsNullOrEmpty(stderrFile))
+        {
+            savedErr = Console.Error;
+            errStream = new StreamWriter(stderrFile, append: false);
+            Console.SetError(errStream);
+        }
+        try { run(); }
+        finally
+        {
+            if (outStream is not null && savedOut is not null) { Console.SetOut(savedOut); outStream.Dispose(); }
+            if (errStream is not null && savedErr is not null) { Console.SetError(savedErr); errStream.Dispose(); }
+        }
     }
 
     static bool IsExecutable(string path)
@@ -159,7 +180,7 @@ class Program
                 continue;
             }
 
-            (string[] args, string? redirectStdout) = ExtractRedirections(parts);
+            (string[] args, string? redirectStdout, string? redirectStderr) = ExtractRedirections(parts);
             if (args.Length == 0)
             {
                 continue;
@@ -173,37 +194,40 @@ class Program
             }
             else if (command == "echo")
             {
-                WithStdoutRedirect(redirectStdout, () =>
+                WithRedirects(redirectStdout, redirectStderr, () =>
                     Console.WriteLine(args.Length > 1 ? string.Join(" ", args[1..]) : ""));
             }
             else if (command == "pwd")
             {
-                WithStdoutRedirect(redirectStdout, () =>
+                WithRedirects(redirectStdout, redirectStderr, () =>
                     Console.WriteLine(Directory.GetCurrentDirectory()));
             }
             else if (command == "cd")
             {
-                string path = args.Length > 1 ? args[1] : "";
-                if (!string.IsNullOrEmpty(path) && (path == "~" || path.StartsWith("~/")))
+                WithRedirects(null, redirectStderr, () =>
                 {
-                    string? home = Environment.GetEnvironmentVariable("HOME")
-                        ?? Environment.GetEnvironmentVariable("USERPROFILE");
-                    if (!string.IsNullOrEmpty(home))
-                        path = path.Length == 1 ? home : Path.Combine(home, path.Substring(2));
-                }
-                if (!string.IsNullOrEmpty(path))
-                {
-                    if (Directory.Exists(path))
-                        Directory.SetCurrentDirectory(path);
-                    else
-                        Console.WriteLine($"cd: {path}: No such file or directory");
-                }
+                    string path = args.Length > 1 ? args[1] : "";
+                    if (!string.IsNullOrEmpty(path) && (path == "~" || path.StartsWith("~/")))
+                    {
+                        string? home = Environment.GetEnvironmentVariable("HOME")
+                            ?? Environment.GetEnvironmentVariable("USERPROFILE");
+                        if (!string.IsNullOrEmpty(home))
+                            path = path.Length == 1 ? home : Path.Combine(home, path.Substring(2));
+                    }
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        if (Directory.Exists(path))
+                            Directory.SetCurrentDirectory(path);
+                        else
+                            Console.WriteLine($"cd: {path}: No such file or directory");
+                    }
+                });
             }
             else if (command == "type")
             {
                 string[] builtins = ["echo", "exit", "type", "pwd", "cd"];
                 string name = args.Length > 1 ? args[1] : "";
-                WithStdoutRedirect(redirectStdout, () =>
+                WithRedirects(redirectStdout, redirectStderr, () =>
                 {
                     if (string.IsNullOrEmpty(name))
                     {
@@ -247,12 +271,16 @@ class Program
                         File.WriteAllText(redirectStdout, output);
                     else
                         Console.Write(output);
-                    Console.Write(error);
+                    if (redirectStderr is not null)
+                        File.WriteAllText(redirectStderr, error);
+                    else
+                        Console.Write(error);
                 }
             }
             else
             {
-                Console.WriteLine($"{command}: not found");
+                WithRedirects(null, redirectStderr, () =>
+                    Console.WriteLine($"{command}: not found"));
             }
         }
     }
