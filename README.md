@@ -1,34 +1,19 @@
-[![progress-banner](https://backend.codecrafters.io/progress/shell/75542964-3910-488d-a4cf-c13cc5714423)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# My Shell
 
-This is a starting point for C# solutions to the
-["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
+My C# implementation for the [Build Your Own Shell](https://app.codecrafters.io/courses/shell/overview) challenge. A small POSIX-style shell that interprets commands, runs external programs, and supports builtins like `echo`, `exit`, and `type`.
 
-In this challenge, you'll build your own POSIX compliant shell that's capable of
-interpreting shell commands, running external programs and builtin commands like
-cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
-REPLs, builtin commands, and more.
+## Running locally
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+- Install [.NET 9.0 SDK](https://dotnet.microsoft.com/download).
+- From the project root: `dotnet run`
+- Or use the script: `./your_program.sh`
 
-# Passing the first stage
-
-The entry point for your `shell` implementation is in `src/main.cs`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+## Submitting to CodeCrafters
 
 ```sh
-git commit -am "pass 1st stage" # any msg
+git add -A
+git commit -m "your message"
 git push origin master
 ```
 
-Time to move on to the next stage!
-
-# Stage 2 & beyond
-
-Note: This section is for stages 2 and beyond.
-
-1. Ensure you have `dotnet (9.0)` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.cs`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+Test output is streamed to your terminal.
