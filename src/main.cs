@@ -32,6 +32,7 @@ class Program
             }
             else
             {
+                // Outside quotes: backslash escapes next char (append it and skip).
                 if (c == '\\')
                 {
                     if (i + 1 < input.Length)
@@ -180,7 +181,7 @@ class Program
                 psi.ArgumentList.Add("-c");
                 string fullCommand = "exec " + command;
                 foreach (string arg in parts[1..])
-                    fullCommand += " \"" + arg.Replace("\"", "\\\"") + "\"";
+                    fullCommand += " \"" + arg.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
                 psi.ArgumentList.Add(fullCommand);
                 using var process = Process.Start(psi);
                 if (process is not null)
