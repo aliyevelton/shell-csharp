@@ -194,7 +194,7 @@ class Program
                     RedirectStandardError = true,
                 };
                 psi.ArgumentList.Add("-c");
-                string fullCommand = "exec " + command;
+                string fullCommand = "exec \"" + command.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
                 foreach (string arg in parts[1..])
                     fullCommand += " \"" + arg.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
                 psi.ArgumentList.Add(fullCommand);
