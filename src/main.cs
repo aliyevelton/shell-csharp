@@ -27,6 +27,21 @@ class Program
             {
                 if (c == '"')
                     inDoubleQuotes = false;
+                else if (c == '\\' && i + 1 < input.Length)
+                {
+                    char next = input[i + 1];
+                    if (next == '"' || next == '\\')
+                    {
+                        current.Append(next);
+                        i++;
+                    }
+                    else
+                    {
+                        current.Append('\\');
+                        current.Append(next);
+                        i++;
+                    }
+                }
                 else
                     current.Append(c);
             }
