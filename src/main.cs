@@ -71,6 +71,13 @@ class Program
             else if (command == "cd")
             {
                 string path = parts.Length > 1 ? parts[1] : "";
+                if (!string.IsNullOrEmpty(path) && (path == "~" || path.StartsWith("~/")))
+                {
+                    string? home = Environment.GetEnvironmentVariable("HOME")
+                        ?? Environment.GetEnvironmentVariable("USERPROFILE");
+                    if (!string.IsNullOrEmpty(home))
+                        path = path.Length == 1 ? home : Path.Combine(home, path.Substring(2));
+                }
                 if (!string.IsNullOrEmpty(path))
                 {
                     if (Directory.Exists(path))
