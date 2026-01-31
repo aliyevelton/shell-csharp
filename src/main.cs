@@ -8,7 +8,14 @@ class Program
 
             string command = Console.ReadLine();
 
-            Console.WriteLine($"{command}: not found");
+            if (command == "exit")
+            {
+                break;
+            }
+            else
+            {
+                Console.WriteLine($"{command}: not found");
+            }
         }
     }
 }
