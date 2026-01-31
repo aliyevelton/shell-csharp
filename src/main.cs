@@ -12,6 +12,7 @@ class Program
         var parts = new List<string>();
         var current = new StringBuilder();
         bool inSingleQuotes = false;
+        bool inDoubleQuotes = false;
         foreach (char c in input)
         {
             if (inSingleQuotes)
@@ -21,10 +22,19 @@ class Program
                 else
                     current.Append(c);
             }
+            else if (inDoubleQuotes)
+            {
+                if (c == '"')
+                    inDoubleQuotes = false;
+                else
+                    current.Append(c);
+            }
             else
             {
                 if (c == '\'')
                     inSingleQuotes = true;
+                else if (c == '"')
+                    inDoubleQuotes = true;
                 else if (c == ' ' || c == '\t')
                 {
                     if (current.Length > 0)
