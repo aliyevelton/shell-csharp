@@ -1,9 +1,47 @@
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 
 class Program
 {
+    static string[] ParseCommandLine(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return Array.Empty<string>();
+        var parts = new List<string>();
+        var current = new StringBuilder();
+        bool inSingleQuotes = false;
+        foreach (char c in input)
+        {
+            if (inSingleQuotes)
+            {
+                if (c == '\'')
+                    inSingleQuotes = false;
+                else
+                    current.Append(c);
+            }
+            else
+            {
+                if (c == '\'')
+                    inSingleQuotes = true;
+                else if (c == ' ' || c == '\t')
+                {
+                    if (current.Length > 0)
+                    {
+                        parts.Add(current.ToString());
+                        current.Clear();
+                    }
+                }
+                else
+                    current.Append(c);
+            }
+        }
+        if (current.Length > 0)
+            parts.Add(current.ToString());
+        return parts.ToArray();
+    }
+
     static bool IsExecutable(string path)
     {
         if (!File.Exists(path))
@@ -47,7 +85,7 @@ class Program
             Console.Write("$ ");
 
             string input = Console.ReadLine();
-            string[] parts = input?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+            string[] parts = ParseCommandLine(input);
 
             if (parts.Length == 0)
             {
