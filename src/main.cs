@@ -89,13 +89,25 @@ class Program
             {
                 var psi = new ProcessStartInfo
                 {
-                    FileName = exePath,
+                    FileName = "/bin/sh",
                     UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                 };
+                psi.ArgumentList.Add("-c");
+                string fullCommand = "exec " + command;
                 foreach (string arg in parts[1..])
-                    psi.ArgumentList.Add(arg);
+                    fullCommand += " \"" + arg.Replace("\"", "\\\"") + "\"";
+                psi.ArgumentList.Add(fullCommand);
                 using var process = Process.Start(psi);
-                process?.WaitForExit();
+                if (process is not null)
+                {
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+                    Console.Write(output);
+                    Console.Write(error);
+                }
             }
             else
             {
