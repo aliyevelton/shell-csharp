@@ -1,4 +1,4 @@
-# My Shell
+# Shell
 
 My C# implementation for the [Build Your Own Shell](https://app.codecrafters.io/courses/shell/overview) challenge. A small POSIX-style shell that interprets commands, runs external programs, and supports builtins like `echo`, `exit`, and `type`.
 
