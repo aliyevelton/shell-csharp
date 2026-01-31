@@ -24,6 +24,19 @@ class Program
             {
                 Console.WriteLine(parts.Length > 1 ? string.Join(" ", parts[1..]) : "");
             }
+            else if (command == "type")
+            {
+                string[] builtins = ["echo", "exit", "type"];
+                string name = parts.Length > 1 ? parts[1] : "";
+                if (builtins.Contains(name))
+                {
+                    Console.WriteLine($"{name} is a shell builtin");
+                }
+                else
+                {
+                    Console.WriteLine(string.IsNullOrEmpty(name) ? ": not found" : $"{name}: not found");
+                }
+            }
             else
             {
                 Console.WriteLine($"{command}: not found");
