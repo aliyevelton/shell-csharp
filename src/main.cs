@@ -180,7 +180,7 @@ class Program
         {
             Console.Write("$ ");
 
-            string input = Console.ReadLine();
+            string? input = Console.ReadLine();
             string[] parts = ParseCommandLine(input);
 
             if (parts.Length == 0)
@@ -235,7 +235,7 @@ class Program
             {
                 string[] builtins = ["echo", "exit", "type", "pwd", "cd"];
                 string name = args.Length > 1 ? args[1] : "";
-                WithRedirects(redirectStdout, redirectStderr, () =>
+                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, () =>
                 {
                     if (string.IsNullOrEmpty(name))
                     {
