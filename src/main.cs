@@ -210,17 +210,17 @@ class Program
             }
             else if (command == "echo")
             {
-                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, () =>
+                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, redirectStderrAppend, () =>
                     Console.WriteLine(args.Length > 1 ? string.Join(" ", args[1..]) : ""));
             }
             else if (command == "pwd")
             {
-                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, () =>
+                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, redirectStderrAppend, () =>
                     Console.WriteLine(Directory.GetCurrentDirectory()));
             }
             else if (command == "cd")
             {
-                WithRedirects(null, false, redirectStderr, () =>
+                WithRedirects(null, false, redirectStderr, redirectStderrAppend, () =>
                 {
                     string path = args.Length > 1 ? args[1] : "";
                     if (!string.IsNullOrEmpty(path) && (path == "~" || path.StartsWith("~/")))
