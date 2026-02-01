@@ -81,16 +81,24 @@ class Program
         return parts.ToArray();
     }
 
-    static (string[] args, string? redirectStdout, string? redirectStderr) ExtractRedirections(string[] parts)
+    static (string[] args, string? redirectStdout, bool stdoutAppend, string? redirectStderr) ExtractRedirections(string[] parts)
     {
         var args = new List<string>();
         string? redirectStdout = null;
+        bool stdoutAppend = false;
         string? redirectStderr = null;
         for (int i = 0; i < parts.Length; i++)
         {
             if ((parts[i] == ">" || parts[i] == "1>") && i + 1 < parts.Length)
             {
                 redirectStdout = parts[i + 1];
+                stdoutAppend = false;
+                i++;
+            }
+            else if ((parts[i] == ">>" || parts[i] == "1>>") && i + 1 < parts.Length)
+            {
+                redirectStdout = parts[i + 1];
+                stdoutAppend = true;
                 i++;
             }
             else if (parts[i] == "2>" && i + 1 < parts.Length)
@@ -103,17 +111,17 @@ class Program
                 args.Add(parts[i]);
             }
         }
-        return (args.ToArray(), redirectStdout, redirectStderr);
+        return (args.ToArray(), redirectStdout, stdoutAppend, redirectStderr);
     }
 
-    static void WithRedirects(string? stdoutFile, string? stderrFile, Action run)
+    static void WithRedirects(string? stdoutFile, bool stdoutAppend, string? stderrFile, Action run)
     {
         TextWriter? savedOut = null, savedErr = null;
         StreamWriter? outStream = null, errStream = null;
         if (!string.IsNullOrEmpty(stdoutFile))
         {
             savedOut = Console.Out;
-            outStream = new StreamWriter(stdoutFile, append: false);
+            outStream = new StreamWriter(stdoutFile, append: stdoutAppend);
             Console.SetOut(outStream);
         }
         if (!string.IsNullOrEmpty(stderrFile))
@@ -180,7 +188,7 @@ class Program
                 continue;
             }
 
-            (string[] args, string? redirectStdout, string? redirectStderr) = ExtractRedirections(parts);
+            (string[] args, string? redirectStdout, bool redirectStdoutAppend, string? redirectStderr) = ExtractRedirections(parts);
             if (args.Length == 0)
             {
                 continue;
@@ -194,17 +202,17 @@ class Program
             }
             else if (command == "echo")
             {
-                WithRedirects(redirectStdout, redirectStderr, () =>
+                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, () =>
                     Console.WriteLine(args.Length > 1 ? string.Join(" ", args[1..]) : ""));
             }
             else if (command == "pwd")
             {
-                WithRedirects(redirectStdout, redirectStderr, () =>
+                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, () =>
                     Console.WriteLine(Directory.GetCurrentDirectory()));
             }
             else if (command == "cd")
             {
-                WithRedirects(null, redirectStderr, () =>
+                WithRedirects(null, false, redirectStderr, () =>
                 {
                     string path = args.Length > 1 ? args[1] : "";
                     if (!string.IsNullOrEmpty(path) && (path == "~" || path.StartsWith("~/")))
@@ -268,7 +276,12 @@ class Program
                     string error = process.StandardError.ReadToEnd();
                     process.WaitForExit();
                     if (redirectStdout is not null)
-                        File.WriteAllText(redirectStdout, output);
+                    {
+                        if (redirectStdoutAppend)
+                            File.AppendAllText(redirectStdout, output);
+                        else
+                            File.WriteAllText(redirectStdout, output);
+                    }
                     else
                         Console.Write(output);
                     if (redirectStderr is not null)
@@ -279,7 +292,7 @@ class Program
             }
             else
             {
-                WithRedirects(null, redirectStderr, () =>
+                WithRedirects(null, false, redirectStderr, () =>
                     Console.WriteLine($"{command}: not found"));
             }
         }
