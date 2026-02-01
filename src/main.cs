@@ -81,12 +81,13 @@ class Program
         return parts.ToArray();
     }
 
-    static (string[] args, string? redirectStdout, bool stdoutAppend, string? redirectStderr) ExtractRedirections(string[] parts)
+    static (string[] args, string? redirectStdout, bool stdoutAppend, string? redirectStderr, bool stderrAppend) ExtractRedirections(string[] parts)
     {
         var args = new List<string>();
         string? redirectStdout = null;
         bool stdoutAppend = false;
         string? redirectStderr = null;
+        bool stderrAppend = false;
         for (int i = 0; i < parts.Length; i++)
         {
             if ((parts[i] == ">" || parts[i] == "1>") && i + 1 < parts.Length)
@@ -104,6 +105,13 @@ class Program
             else if (parts[i] == "2>" && i + 1 < parts.Length)
             {
                 redirectStderr = parts[i + 1];
+                stderrAppend = false;
+                i++;
+            }
+            else if (parts[i] == "2>>" && i + 1 < parts.Length)
+            {
+                redirectStderr = parts[i + 1];
+                stderrAppend = true;
                 i++;
             }
             else
@@ -111,10 +119,10 @@ class Program
                 args.Add(parts[i]);
             }
         }
-        return (args.ToArray(), redirectStdout, stdoutAppend, redirectStderr);
+        return (args.ToArray(), redirectStdout, stdoutAppend, redirectStderr, stderrAppend);
     }
 
-    static void WithRedirects(string? stdoutFile, bool stdoutAppend, string? stderrFile, Action run)
+    static void WithRedirects(string? stdoutFile, bool stdoutAppend, string? stderrFile, bool stderrAppend, Action run)
     {
         TextWriter? savedOut = null, savedErr = null;
         StreamWriter? outStream = null, errStream = null;
@@ -127,7 +135,7 @@ class Program
         if (!string.IsNullOrEmpty(stderrFile))
         {
             savedErr = Console.Error;
-            errStream = new StreamWriter(stderrFile, append: false);
+            errStream = new StreamWriter(stderrFile, append: stderrAppend);
             Console.SetError(errStream);
         }
         try { run(); }
@@ -188,7 +196,7 @@ class Program
                 continue;
             }
 
-            (string[] args, string? redirectStdout, bool redirectStdoutAppend, string? redirectStderr) = ExtractRedirections(parts);
+            (string[] args, string? redirectStdout, bool redirectStdoutAppend, string? redirectStderr, bool redirectStderrAppend) = ExtractRedirections(parts);
             if (args.Length == 0)
             {
                 continue;
@@ -235,7 +243,7 @@ class Program
             {
                 string[] builtins = ["echo", "exit", "type", "pwd", "cd"];
                 string name = args.Length > 1 ? args[1] : "";
-                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, () =>
+                WithRedirects(redirectStdout, redirectStdoutAppend, redirectStderr, redirectStderrAppend, () =>
                 {
                     if (string.IsNullOrEmpty(name))
                     {
@@ -292,7 +300,7 @@ class Program
             }
             else
             {
-                WithRedirects(null, false, redirectStderr, () =>
+                WithRedirects(null, false, redirectStderr, redirectStderrAppend, () =>
                     Console.WriteLine($"{command}: not found"));
             }
         }
