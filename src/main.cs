@@ -293,7 +293,12 @@ class Program
                     else
                         Console.Write(output);
                     if (redirectStderr is not null)
-                        File.WriteAllText(redirectStderr, error);
+                    {
+                        if (redirectStderrAppend)
+                            File.AppendAllText(redirectStderr, error);
+                        else
+                            File.WriteAllText(redirectStderr, error);
+                    }
                     else
                         Console.Write(error);
                 }
