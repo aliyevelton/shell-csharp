@@ -182,13 +182,81 @@ class Program
         return false;
     }
 
+    static string? ReadLineWithCompletion()
+    {
+        int promptLeft = Console.CursorLeft;
+        int promptTop = Console.CursorTop;
+        Console.Write("$ ");
+        int startLeft = Console.CursorLeft;
+        int startTop = Console.CursorTop;
+        var line = new StringBuilder();
+        int cursorPosition = 0;
+        int displayedLength = 0;
+        string[] completableBuiltins = ["echo", "exit"];
+
+        void Redraw()
+        {
+            Console.SetCursorPosition(promptLeft, promptTop);
+            Console.Write("$ ");
+            Console.Write(line.ToString());
+            int padding = displayedLength - line.Length;
+            if (padding > 0)
+                Console.Write(new string(' ', padding));
+            displayedLength = line.Length;
+            Console.SetCursorPosition(startLeft + cursorPosition, startTop);
+        }
+
+        while (true)
+        {
+            var key = Console.ReadKey(true);
+            if (key.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                return line.Length > 0 ? line.ToString() : null;
+            }
+            if (key.Key == ConsoleKey.Tab)
+            {
+                string word = line.ToString().Substring(0, cursorPosition);
+                bool echoMatch = "echo".StartsWith(word, StringComparison.Ordinal);
+                bool exitMatch = "exit".StartsWith(word, StringComparison.Ordinal);
+                string? completion = null;
+                if (echoMatch && !exitMatch)
+                    completion = "echo ";
+                else if (exitMatch && !echoMatch)
+                    completion = "exit ";
+                if (completion is not null)
+                {
+                    line.Remove(0, cursorPosition);
+                    line.Insert(0, completion);
+                    cursorPosition = completion.Length;
+                    Redraw();
+                }
+                continue;
+            }
+            if (key.Key == ConsoleKey.Backspace)
+            {
+                if (cursorPosition > 0)
+                {
+                    line.Remove(cursorPosition - 1, 1);
+                    cursorPosition--;
+                    Redraw();
+                }
+                continue;
+            }
+            if (key.KeyChar >= ' ' && key.KeyChar <= '~')
+            {
+                line.Insert(cursorPosition, key.KeyChar);
+                cursorPosition++;
+                Redraw();
+            }
+        }
+    }
+
     static void Main()
     {
         while (true)
         {
-            Console.Write("$ ");
-
-            string? input = Console.ReadLine();
+            string? input = ReadLineWithCompletion();
             string[] parts = ParseCommandLine(input);
 
             if (parts.Length == 0)
