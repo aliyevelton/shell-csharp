@@ -182,17 +182,44 @@ class Program
         return false;
     }
 
+    static string? CompleteBuiltinPrefix(string word)
+    {
+        bool echoMatch = "echo".StartsWith(word, StringComparison.Ordinal);
+        bool exitMatch = "exit".StartsWith(word, StringComparison.Ordinal);
+        if (echoMatch && !exitMatch) return "echo ";
+        if (exitMatch && !echoMatch) return "exit ";
+        return null;
+    }
+
     static string? ReadLineWithCompletion()
     {
+        Console.Write("$ ");
+        Console.Out.Flush();
+
+        if (Console.IsInputRedirected)
+        {
+            string? line = Console.ReadLine();
+            if (string.IsNullOrEmpty(line)) return line;
+            int tabIndex = line.IndexOf('\t');
+            if (tabIndex >= 0)
+            {
+                string word = line.Substring(0, tabIndex);
+                string? completion = CompleteBuiltinPrefix(word);
+                if (completion is not null)
+                    line = completion + line.Substring(tabIndex + 1);
+                else
+                    line = line.Remove(tabIndex, 1);
+            }
+            return line;
+        }
+
         int promptLeft = Console.CursorLeft;
         int promptTop = Console.CursorTop;
-        Console.Write("$ ");
         int startLeft = Console.CursorLeft;
         int startTop = Console.CursorTop;
         var line = new StringBuilder();
         int cursorPosition = 0;
         int displayedLength = 0;
-        string[] completableBuiltins = ["echo", "exit"];
 
         void Redraw()
         {
@@ -217,13 +244,7 @@ class Program
             if (key.Key == ConsoleKey.Tab)
             {
                 string word = line.ToString().Substring(0, cursorPosition);
-                bool echoMatch = "echo".StartsWith(word, StringComparison.Ordinal);
-                bool exitMatch = "exit".StartsWith(word, StringComparison.Ordinal);
-                string? completion = null;
-                if (echoMatch && !exitMatch)
-                    completion = "echo ";
-                else if (exitMatch && !echoMatch)
-                    completion = "exit ";
+                string? completion = CompleteBuiltinPrefix(word);
                 if (completion is not null)
                 {
                     line.Remove(0, cursorPosition);
