@@ -210,6 +210,8 @@ class Program
                 else
                     inputLine = inputLine.Remove(tabIndex, 1);
             }
+            Console.Write(inputLine);
+            Console.WriteLine();
             return inputLine;
         }
 
