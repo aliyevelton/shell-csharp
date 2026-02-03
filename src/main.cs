@@ -182,46 +182,16 @@ class Program
         return false;
     }
 
-    static string? CompleteBuiltinPrefix(string word)
-    {
-        bool echoMatch = "echo".StartsWith(word, StringComparison.Ordinal);
-        bool exitMatch = "exit".StartsWith(word, StringComparison.Ordinal);
-        if (echoMatch && !exitMatch) return "echo ";
-        if (exitMatch && !echoMatch) return "exit ";
-        return null;
-    }
-
     static string? ReadLineWithCompletion()
     {
-        Console.Write("$ ");
-        Console.Out.Flush();
-
-        if (Console.IsInputRedirected)
-        {
-            string? inputLine = Console.ReadLine();
-            if (string.IsNullOrEmpty(inputLine)) return inputLine;
-            int tabIndex = inputLine.IndexOf('\t');
-            if (tabIndex >= 0)
-            {
-                string word = inputLine.Substring(0, tabIndex);
-                string? completion = CompleteBuiltinPrefix(word);
-                if (completion is not null)
-                    inputLine = completion + inputLine.Substring(tabIndex + 1);
-                else
-                    inputLine = inputLine.Remove(tabIndex, 1);
-            }
-            Console.Write(inputLine);
-            Console.WriteLine();
-            return inputLine;
-        }
-
-        int promptLeft = Console.CursorLeft;
-        int promptTop = Console.CursorTop;
         int startLeft = Console.CursorLeft;
         int startTop = Console.CursorTop;
+        int promptLeft = startLeft - 2;
+        int promptTop = startTop;
         var line = new StringBuilder();
         int cursorPosition = 0;
         int displayedLength = 0;
+        string[] completableBuiltins = ["echo", "exit"];
 
         void Redraw()
         {
@@ -246,7 +216,13 @@ class Program
             if (key.Key == ConsoleKey.Tab)
             {
                 string word = line.ToString().Substring(0, cursorPosition);
-                string? completion = CompleteBuiltinPrefix(word);
+                bool echoMatch = "echo".StartsWith(word, StringComparison.Ordinal);
+                bool exitMatch = "exit".StartsWith(word, StringComparison.Ordinal);
+                string? completion = null;
+                if (echoMatch && !exitMatch)
+                    completion = "echo ";
+                else if (exitMatch && !echoMatch)
+                    completion = "exit ";
                 if (completion is not null)
                 {
                     line.Remove(0, cursorPosition);
@@ -279,6 +255,8 @@ class Program
     {
         while (true)
         {
+            Console.Write("$ ");
+            Console.Out.Flush();
             string? input = ReadLineWithCompletion();
             string[] parts = ParseCommandLine(input);
 
