@@ -198,19 +198,19 @@ class Program
 
         if (Console.IsInputRedirected)
         {
-            string? line = Console.ReadLine();
-            if (string.IsNullOrEmpty(line)) return line;
-            int tabIndex = line.IndexOf('\t');
+            string? inputLine = Console.ReadLine();
+            if (string.IsNullOrEmpty(inputLine)) return inputLine;
+            int tabIndex = inputLine.IndexOf('\t');
             if (tabIndex >= 0)
             {
-                string word = line.Substring(0, tabIndex);
+                string word = inputLine.Substring(0, tabIndex);
                 string? completion = CompleteBuiltinPrefix(word);
                 if (completion is not null)
-                    line = completion + line.Substring(tabIndex + 1);
+                    inputLine = completion + inputLine.Substring(tabIndex + 1);
                 else
-                    line = line.Remove(tabIndex, 1);
+                    inputLine = inputLine.Remove(tabIndex, 1);
             }
-            return line;
+            return inputLine;
         }
 
         int promptLeft = Console.CursorLeft;
