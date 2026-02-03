@@ -186,12 +186,11 @@ class Program
     {
         int startLeft = Console.CursorLeft;
         int startTop = Console.CursorTop;
-        int promptLeft = startLeft - 2;
+        int promptLeft = Math.Max(0, startLeft - 2);
         int promptTop = startTop;
         var line = new StringBuilder();
         int cursorPosition = 0;
         int displayedLength = 0;
-        string[] completableBuiltins = ["echo", "exit"];
 
         void Redraw()
         {
@@ -238,7 +237,13 @@ class Program
                 {
                     line.Remove(cursorPosition - 1, 1);
                     cursorPosition--;
-                    Redraw();
+                    if (cursorPosition == line.Length)
+                    {
+                        displayedLength = line.Length;
+                        Console.Write("\b \b");
+                    }
+                    else
+                        Redraw();
                 }
                 continue;
             }
@@ -246,7 +251,13 @@ class Program
             {
                 line.Insert(cursorPosition, key.KeyChar);
                 cursorPosition++;
-                Redraw();
+                if (cursorPosition == line.Length)
+                {
+                    displayedLength = line.Length;
+                    Console.Write(key.KeyChar);
+                }
+                else
+                    Redraw();
             }
         }
     }
