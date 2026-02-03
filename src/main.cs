@@ -202,6 +202,7 @@ class Program
                 Console.Write(new string(' ', padding));
             displayedLength = line.Length;
             Console.SetCursorPosition(startLeft + cursorPosition, startTop);
+            Console.Out.Flush();
         }
 
         void UpdateFromCursor(char newChar)
@@ -212,6 +213,7 @@ class Program
                 Console.Write(line.ToString().Substring(cursorPosition));
             displayedLength = line.Length;
             Console.SetCursorPosition(startLeft + cursorPosition, startTop);
+            Console.Out.Flush();
         }
 
         void UpdateFromCursorAfterBackspace()
@@ -222,6 +224,7 @@ class Program
             Console.Write(' ');
             displayedLength = line.Length;
             Console.SetCursorPosition(startLeft + cursorPosition, startTop);
+            Console.Out.Flush();
         }
 
         while (true)
@@ -261,6 +264,7 @@ class Program
                     {
                         displayedLength = line.Length;
                         Console.Write("\b \b");
+                        Console.Out.Flush();
                     }
                     else
                         UpdateFromCursorAfterBackspace();
@@ -275,6 +279,7 @@ class Program
                 {
                     displayedLength = line.Length;
                     Console.Write(key.KeyChar);
+                    Console.Out.Flush();
                 }
                 else
                     UpdateFromCursor(key.KeyChar);
