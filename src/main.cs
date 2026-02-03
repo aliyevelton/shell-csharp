@@ -204,6 +204,26 @@ class Program
             Console.SetCursorPosition(startLeft + cursorPosition, startTop);
         }
 
+        void UpdateFromCursor(char newChar)
+        {
+            Console.SetCursorPosition(startLeft + cursorPosition - 1, startTop);
+            Console.Write(newChar);
+            if (cursorPosition < line.Length)
+                Console.Write(line.ToString().Substring(cursorPosition));
+            displayedLength = line.Length;
+            Console.SetCursorPosition(startLeft + cursorPosition, startTop);
+        }
+
+        void UpdateFromCursorAfterBackspace()
+        {
+            Console.SetCursorPosition(startLeft + cursorPosition, startTop);
+            string tail = line.ToString().Substring(cursorPosition);
+            Console.Write(tail);
+            Console.Write(' ');
+            displayedLength = line.Length;
+            Console.SetCursorPosition(startLeft + cursorPosition, startTop);
+        }
+
         while (true)
         {
             var key = Console.ReadKey(true);
@@ -243,7 +263,7 @@ class Program
                         Console.Write("\b \b");
                     }
                     else
-                        Redraw();
+                        UpdateFromCursorAfterBackspace();
                 }
                 continue;
             }
@@ -257,7 +277,7 @@ class Program
                     Console.Write(key.KeyChar);
                 }
                 else
-                    Redraw();
+                    UpdateFromCursor(key.KeyChar);
             }
         }
     }
